@@ -22,6 +22,13 @@ class Linear:
     def nelement(self):
         return sum(self.parameters())
 
+    def set_bias(self, bias=True, device='cpu', gen=None):
+        if self.b is None:
+            self.b = torch.randn(out_features, device=device, generator=gen) if bias else None
+        else:
+            if not bias:
+                self.b = None
+
 
 class LinearNormalized(Linear):
     def __init__(self, in_features, out_features, bias=True, device='cpu', dtype=torch.float32, gen=None):

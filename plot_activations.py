@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from layers import Tanh
 from train import train_step, train
 
-def plot_forward_activations(model, layer_type=None):
+def plot_forward_activations(model, layer_type=None, legend=True):
     plt.figure(figsize=(20, 4))
     legends = []
     for i, layer in enumerate(model.layers):
@@ -17,11 +17,12 @@ def plot_forward_activations(model, layer_type=None):
             hy, hx = torch.histogram(t, density=True)
             plt.plot(hx[:-1].detach(), hy.detach())
             legends.append(f'layer {i} ({layer.__class__.__name__}')
-    plt.legend(legends);
+    if legend:
+        plt.legend(legends);
     plt.title('activation distribution')
 
 
-def plot_backward_gradients(model, layer_type=None):
+def plot_backward_gradients(model, layer_type=None, legend=True):
     plt.figure(figsize=(20, 4))
     legends = []
     for i, layer in enumerate(model.layers):
@@ -32,11 +33,12 @@ def plot_backward_gradients(model, layer_type=None):
             hy, hx = torch.histogram(t, density=True)
             plt.plot(hx[:-1].detach(), hy.detach())
             legends.append(f'layer {i} ({layer.__class__.__name__}')
-    plt.legend(legends);
+    if legend:
+        plt.legend(legends);
     plt.title('gradient distribution')
 
 
-def plot_weights_gradients(model):
+def plot_weights_gradients(model, legend=True):
     plt.figure(figsize=(20, 4))
     legends = []
     for i,p in enumerate(model.parameters()):
@@ -46,11 +48,12 @@ def plot_weights_gradients(model):
             hy, hx = torch.histogram(t, density=True)
             plt.plot(hx[:-1].detach(), hy.detach())
             legends.append(f'{i} {tuple(p.shape)}')
-    plt.legend(legends)
+    if legend:
+        plt.legend(legends)
     plt.title('weights gradient distribution');
 
 
-def plot_gradient_to_weight_ratio(optimizer):
+def plot_gradient_to_weight_ratio(optimizer, legend=True):
     plt.figure(figsize=(20, 4))
     legends = []
     ud = optimizer.update_data_ratio
@@ -59,16 +62,17 @@ def plot_gradient_to_weight_ratio(optimizer):
             plt.plot([ud[j][i] for j in range(len(ud))])
             legends.append('param %d' % i)
     plt.plot([0, len(ud)], [-3, -3], 'k') # these ratios should be ~1e-3, indicate on plot
-    plt.legend(legends);
+    if legend:
+        plt.legend(legends)
 
-def plot_initialization_statistics(model, optimizer, train_ds, val_ds, device='cpu'):
+def plot_initialization_statistics(model, optimizer, train_ds, val_ds, device='cpu', legend=True):
     init_t_loss = F.cross_entropy(model(train_ds.X.to(device)), train_ds.y.to(device)).item()
     init_v_loss = F.cross_entropy(model(val_ds.X.to(device)), val_ds. y.to(device)).item()
     print(f"{init_t_loss=}, {init_v_loss=}")
-    plot_forward_activations(model, layer_type=Tanh)
+    plot_forward_activations(model, layer_type=Tanh, legend=legend)
     mb_X, mb_y = train_ds.get_mini_batch(64, device)
     train_step(model, mb_X, mb_y, optimizer)
-    plot_backward_gradients(model, Tanh)
-    plot_weights_gradients(model)
+    plot_backward_gradients(model, Tanh, legend=legend)
+    plot_weights_gradients(model, legend=legend)
     t_loss, v_loss = train(model, train_ds, val_ds, epoches=1, batch_size=182, optimizer=optimizer, device=device)
-    plot_gradient_to_weight_ratio(optimizer)
+    plot_gradient_to_weight_ratio(optimizer, legend=legend)

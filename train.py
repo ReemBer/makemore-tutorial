@@ -21,6 +21,8 @@ def train(model, train_dataset, val_dataset, epoches, batch_size, optimizer, dev
             mini_batch_X, mini_batch_y = train_dataset.get_mini_batch(batch_size, device)
             loss = train_step(model, mini_batch_X, mini_batch_y, optimizer)
             cur_losses.append(loss.item())
+            mini_batch_X.detach().cpu()
+            mini_batch_y.detach().cpu()
         cur_avg_train_loss = sum(cur_losses) / len(cur_losses)
         cur_val_loss = F.cross_entropy(model(val_dataset.X), val_dataset.y).item()
         print(f'{epoch=}: {cur_avg_train_loss=}, {cur_val_loss=}')
