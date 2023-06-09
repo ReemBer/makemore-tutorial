@@ -12,8 +12,9 @@ def train_step(model, mini_batch_X, mini_batch_y, optimizer):
     return loss
 
 
-def train(model, train_dataset, val_dataset, epoches, batch_size, optimizer, device='cpu'):
+def train(model, train_dataset, val_dataset, epoches, batch_size, optimizer, step_callback=None, device='cpu'):
     train_loss, val_loss = [], []
+    step = 0
     for epoch in range(epoches):
         train_dataset.reshuffle()
         cur_losses = []
@@ -21,8 +22,9 @@ def train(model, train_dataset, val_dataset, epoches, batch_size, optimizer, dev
             mini_batch_X, mini_batch_y = train_dataset.get_mini_batch(batch_size, device)
             loss = train_step(model, mini_batch_X, mini_batch_y, optimizer)
             cur_losses.append(loss.item())
-            mini_batch_X.detach().cpu()
-            mini_batch_y.detach().cpu()
+            if step_callback is not None:
+                step_callback(step, model)
+            step += 1
         cur_avg_train_loss = sum(cur_losses) / len(cur_losses)
         cur_val_loss = F.cross_entropy(model(val_dataset.X), val_dataset.y).item()
         print(f'{epoch=}: {cur_avg_train_loss=}, {cur_val_loss=}')

@@ -54,3 +54,34 @@ class Tanh():
 
     def parameters(self):
         return []
+
+
+class BatchNorm1d:
+    def __init__(self, out_features, is_training=True, momentum=0.001, eps=1e-4, device='cpu'):
+        self.m = momentum
+        self.eps = eps
+        self.is_training = is_training
+        self.gamma = torch.ones((1, out_features), requires_grad=True, device=device)
+        self.beta = torch.zeros((1, out_features), requires_grad=True, device=device)
+        self.running_E = torch.zeros((1, out_features), device=device)
+        self.running_sigma = torch.ones((1, out_features), device=device)
+
+    def __call__(self, X):
+        if self.is_training:
+            E = X.mean(dim=0, keepdims=True)
+            sigma = X.std(dim=0, keepdims=True)
+            norm_X = (X - E) / (sigma + self.eps)
+            with torch.no_grad():
+                self.running_E = (1-self.m) * self.running_E + self.m * E
+                self.running_sigma = (1-self.m) * self.running_sigma + self.m * sigma
+            return self.gamma * norm_X + self.beta
+        else:
+            norm_X = (X - self.running_E) / (self.running_sigma + self.eps)
+            return self.gamma * norm_X + self.beta
+
+    def parameters(self):
+        return [self.gamma, self.beta]
+
+    def set_training(self, is_training=True):
+        self.is_training = is_training
+
